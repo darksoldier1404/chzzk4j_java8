@@ -121,7 +121,7 @@ public class ChzzkClient {
     public CompletableFuture<Void> loginAsync() {
         if (!isAnonymous) {
             return CompletableFuture.runAsync(() -> {
-                ChzzkLoginResult finalResult = new ChzzkLoginResult(
+                var finalResult = new ChzzkLoginResult(
                         null,
                         null,
                         null,
@@ -130,7 +130,7 @@ public class ChzzkClient {
                 );
 
                 for (ChzzkLoginAdapter adapter : loginAdapters) {
-                    ChzzkLoginResult result = adapter.authorize(this).join();
+                    var result = adapter.authorize(this).join();
                     if (result.accessToken() != null) {
                         finalResult._setAccessToken(result.accessToken());
                     }
@@ -436,12 +436,12 @@ public class ChzzkClient {
         if (!isLoggedIn) throw new NotLoggedInException("Can't send chat without logging in!");
         if (isLegacyOnly) throw new IllegalStateException("Can't send chat without logging in with access token!");
 
-        JsonObject req = new JsonObject();
+        var req = new JsonObject();
         req.addProperty("message", content);
 
         return CompletableFuture.supplyAsync(() -> {
             try {
-                JsonElement resp = RawApiUtils.getContentJson(getHttpClient(), RawApiUtils.httpPostRequest(ChzzkClient.OPENAPI_URL + "/open/v1/chats/send",
+                var resp = RawApiUtils.getContentJson(getHttpClient(), RawApiUtils.httpPostRequest(ChzzkClient.OPENAPI_URL + "/open/v1/chats/send",
                         gson.toJson(req)).build(), isDebug);
 
                 return resp.getAsJsonObject().get("messageId").getAsString();
@@ -455,7 +455,7 @@ public class ChzzkClient {
         if (!isLoggedIn) throw new NotLoggedInException("Can't send announcement without logging in!");
         if (isLegacyOnly) throw new IllegalStateException("Can't set announcement without logging in with access token!");
 
-        JsonObject req = new JsonObject();
+        var req = new JsonObject();
         req.addProperty("message", content);
 
         return CompletableFuture.runAsync(() -> {
@@ -522,7 +522,7 @@ public class ChzzkClient {
 
         return CompletableFuture.supplyAsync(() -> {
             try {
-                return gson.fromJson(RawApiUtils.getContentJson(getHttpClient(), RawApiUtils.httpGetRequest(ChzzkClient.OPENAPI_URL + "/open/v1/categories/search?size=" + searchCount + "&query=" + URLEncoder.encode(query, String.valueOf(StandardCharsets.UTF_8)))
+                return gson.fromJson(RawApiUtils.getContentJson(getHttpClient(), RawApiUtils.httpGetRequest(ChzzkClient.OPENAPI_URL + "/open/v1/categories/search?size=" + searchCount + "&query=" + URLEncoder.encode(query, StandardCharsets.UTF_8))
                                 .addHeader("Not-Token-Api", "1")
                         .build(), isDebug), ChzzkLiveCategory.SearchResponse.class).getData();
             } catch (IOException e) {
@@ -537,7 +537,7 @@ public class ChzzkClient {
 
         return CompletableFuture.supplyAsync(() -> {
             try {
-                JsonElement elem = RawApiUtils.getContentJson(getHttpClient(), RawApiUtils.httpGetRequest(ChzzkClient.OPENAPI_URL + "/open/v1/chats/settings").build(), isDebug);
+                var elem = RawApiUtils.getContentJson(getHttpClient(), RawApiUtils.httpGetRequest(ChzzkClient.OPENAPI_URL + "/open/v1/chats/settings").build(), isDebug);
 
                 return gson.fromJson(elem, ChzzkChatSettings.class);
             } catch (IOException e) {
@@ -552,7 +552,7 @@ public class ChzzkClient {
 
         return CompletableFuture.supplyAsync(() -> {
             try {
-                JsonElement elem = RawApiUtils.getContentJson(getHttpClient(),
+                var elem = RawApiUtils.getContentJson(getHttpClient(),
                         RawApiUtils.httpPutRequest(
                                 ChzzkClient.OPENAPI_URL + "/open/v1/chats/settings",
                                 gson.toJson(newSettings)).build(), isDebug);
@@ -575,7 +575,7 @@ public class ChzzkClient {
 
         return CompletableFuture.runAsync(() -> {
             try {
-                JsonElement resp = RawApiUtils.getContentJson(getHttpClient(), RawApiUtils.httpPostRequest(ChzzkClient.OPENAPI_URL + "/auth/v1/token",
+                var resp = RawApiUtils.getContentJson(getHttpClient(), RawApiUtils.httpPostRequest(ChzzkClient.OPENAPI_URL + "/auth/v1/token",
                         gson.toJson(new TokenRefreshRequestBody(
                                 "refresh_token",
                                 loginResult.refreshToken(),
@@ -583,18 +583,18 @@ public class ChzzkClient {
                                 apiSecret
                         ))).build(), isDebug);
 
-                TokenResponseBody respBody = gson.fromJson(resp, TokenResponseBody.class);
+                var respBody = gson.fromJson(resp, TokenResponseBody.class);
 
                 if (isDebug) {
                     System.out.println("-- Token Refresh!");
-                    System.out.println("AccToken: " + respBody.getAccessToken());
-                    System.out.println("RefToken: " + respBody.getRefreshToken());
-                    System.out.println("ExpiresIn: " + respBody.getExpiresIn());
+                    System.out.println("AccToken: " + respBody.accessToken());
+                    System.out.println("RefToken: " + respBody.refreshToken());
+                    System.out.println("ExpiresIn: " + respBody.expiresIn());
                 }
 
-                String accToken = respBody.getAccessToken();
-                String refToken = respBody.getRefreshToken();
-                int expiresIn = respBody.getExpiresIn();
+                var accToken = respBody.accessToken();
+                var refToken = respBody.refreshToken();
+                var expiresIn = respBody.expiresIn();
 
                 if (accToken == null || refToken == null) {
                     throw new Exception("access token or refresh token is null");
