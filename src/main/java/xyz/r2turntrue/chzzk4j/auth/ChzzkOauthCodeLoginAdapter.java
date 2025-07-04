@@ -25,7 +25,7 @@ public class ChzzkOauthCodeLoginAdapter implements ChzzkLoginAdapter {
     @Override
     public CompletableFuture<ChzzkLoginResult> authorize(ChzzkClient client) {
         return CompletableFuture.supplyAsync(() -> {
-            Gson gson = new Gson();
+            var gson = new Gson();
 
             JsonElement resp = null;
             try {
@@ -38,20 +38,20 @@ public class ChzzkOauthCodeLoginAdapter implements ChzzkLoginAdapter {
                                 state
                         ))).build(), client.isDebug);
 
-                TokenResponseBody respBody = gson.fromJson(resp, TokenResponseBody.class);
+                var respBody = gson.fromJson(resp, TokenResponseBody.class);
 
                 if (client.isDebug) {
-                    System.out.println("AccToken: " + respBody.getAccessToken());
-                    System.out.println("RefToken: " + respBody.getRefreshToken());
-                    System.out.println("ExpiresIn: " + respBody.getExpiresIn());
+                    System.out.println("AccToken: " + respBody.accessToken());
+                    System.out.println("RefToken: " + respBody.refreshToken());
+                    System.out.println("ExpiresIn: " + respBody.expiresIn());
                 }
 
                 return new ChzzkLoginResult(
                         null,
                         null,
-                        respBody.getAccessToken(),
-                        respBody.getRefreshToken(),
-                        respBody.getExpiresIn()
+                        respBody.accessToken(),
+                        respBody.refreshToken(),
+                        respBody.expiresIn()
                 );
             } catch (IOException e) {
                 throw new RuntimeException(e);

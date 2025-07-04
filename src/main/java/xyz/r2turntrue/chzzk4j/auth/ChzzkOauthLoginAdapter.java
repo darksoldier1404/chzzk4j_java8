@@ -1,7 +1,6 @@
 package xyz.r2turntrue.chzzk4j.auth;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonElement;
 import com.sun.net.httpserver.HttpServer;
 import xyz.r2turntrue.chzzk4j.ChzzkClient;
 import xyz.r2turntrue.chzzk4j.auth.oauth.TokenRequestBody;
@@ -10,14 +9,17 @@ import xyz.r2turntrue.chzzk4j.util.HttpUtils;
 import xyz.r2turntrue.chzzk4j.util.RawApiUtils;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class ChzzkOauthLoginAdapter implements ChzzkLoginAdapter {
 
@@ -86,9 +88,9 @@ public class ChzzkOauthLoginAdapter implements ChzzkLoginAdapter {
 
                         if (client.isDebug) System.out.println("Received the code");
 
-                        Gson gson = new Gson();
+                        var gson = new Gson();
 
-                        JsonElement resp = RawApiUtils.getContentJson(client.getHttpClient(), RawApiUtils.httpPostRequest(ChzzkClient.OPENAPI_URL + "/auth/v1/token",
+                        var resp = RawApiUtils.getContentJson(client.getHttpClient(), RawApiUtils.httpPostRequest(ChzzkClient.OPENAPI_URL + "/auth/v1/token",
                                 gson.toJson(new TokenRequestBody(
                                         "authorization_code",
                                         client.getApiClientId(),
@@ -97,17 +99,17 @@ public class ChzzkOauthLoginAdapter implements ChzzkLoginAdapter {
                                         state
                                 ))).build(), client.isDebug);
 
-                        TokenResponseBody respBody = gson.fromJson(resp, TokenResponseBody.class);
+                        var respBody = gson.fromJson(resp, TokenResponseBody.class);
 
                         if (client.isDebug) {
-                            System.out.println("AccToken: " + respBody.getAccessToken());
-                            System.out.println("RefToken: " + respBody.getRefreshToken());
-                            System.out.println("ExpiresIn: " + respBody.getExpiresIn());
+                            System.out.println("AccToken: " + respBody.accessToken());
+                            System.out.println("RefToken: " + respBody.refreshToken());
+                            System.out.println("ExpiresIn: " + respBody.expiresIn());
                         }
 
-                        accToken = respBody.getAccessToken();
-                        refToken = respBody.getRefreshToken();
-                        expiresIn = respBody.getExpiresIn();
+                        accToken = respBody.accessToken();
+                        refToken = respBody.refreshToken();
+                        expiresIn = respBody.expiresIn();
 
                         if (accToken == null || refToken == null) {
                             throw new Exception("access token or refresh token is null");
@@ -120,8 +122,8 @@ public class ChzzkOauthLoginAdapter implements ChzzkLoginAdapter {
                     } else {
                         HttpUtils.sendContent(exchange, failedPage, 403);
                     }
-                } catch (Exception e) {
-                    if (client.isDebug) e.printStackTrace();
+                } catch(Exception e) {
+                    if(client.isDebug) e.printStackTrace();
                     HttpUtils.sendContent(exchange, e.getMessage(), 403);
                 }
             });
@@ -144,11 +146,11 @@ public class ChzzkOauthLoginAdapter implements ChzzkLoginAdapter {
         });
     }
 
-    public String getAccountInterlockUrl(String clientId, boolean redirectToHttps) throws UnsupportedEncodingException {
+    public String getAccountInterlockUrl(String clientId, boolean redirectToHttps) {
         return getAccountInterlockUrl(clientId, redirectToHttps, "dummy");
     }
 
-    public String getAccountInterlockUrl(String clientId, boolean redirectToHttps, String state) throws UnsupportedEncodingException {
+    public String getAccountInterlockUrl(String clientId, boolean redirectToHttps, String state) {
         return "https://chzzk.naver.com/account-interlock" +
                 "?clientId=" +
                 clientId +
@@ -159,12 +161,12 @@ public class ChzzkOauthLoginAdapter implements ChzzkLoginAdapter {
                                 ":" +
                                 port +
                                 "/oauth_callback",
-                        String.valueOf(StandardCharsets.UTF_8)
+                        StandardCharsets.UTF_8
                 ) +
                 "&state=" +
                 URLEncoder.encode(
                         state,
-                        String.valueOf(StandardCharsets.UTF_8)
+                        StandardCharsets.UTF_8
                 );
     }
 
